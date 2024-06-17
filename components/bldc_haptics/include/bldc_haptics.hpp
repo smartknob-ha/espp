@@ -183,6 +183,17 @@ public:
   /// @return Current position of the haptic motor
   float get_position() const { return current_position_; }
 
+  /// @brief Sets the current position of the haptic motor
+  /// @note  Clamps new position to current DetentConfig min and max positions
+  void set_position(int new_position) {
+    if (new_position < detent_config_.min_position) {
+      current_position_ = detent_config_.min_position;
+    } else if (new_position > detent_config_.max_position) {
+      current_position_ = detent_config_.max_position;
+    }
+    current_position_ = new_position;
+  }
+
   /// @brief Configure the detents for the haptic motor
   void update_detent_config(const detail::DetentConfig &config) {
     std::unique_lock<std::mutex> lk(detent_mutex_);
