@@ -186,24 +186,33 @@ public:
   /// @return Current position of the haptic motor
   float get_position() const { return current_position_; }
 
+  /// @brief Sets the current position of the haptic motor to
+  ///        within the bounds of the current detent config
+  void set_position(const int position) {
+    if (position < detent_config_.min_position) {
+      // if the current position is less than the min position, set the current
+      // position to the min position
+      current_position_ = detent_config_.min_position;
+    } else if (position > detent_config_.max_position) {
+      // if the current position is greater than the max position, set the
+      // current position to the max position
+      current_position_ = detent_config_.max_position;
+    } else {
+      current_position_ = position;
+    }
+  }
+
   /// @brief Configure the detents for the haptic motor
   void update_detent_config(const detail::DetentConfig &config) {
     std::unique_lock<std::mutex> lk(detent_mutex_);
     // update the detent center
     current_detent_center_ = motor_.get().get_shaft_angle();
 
-    if (current_position_ < config.min_position) {
-      // if the current position is less than the min position, set the current
-      // position to the min position
-      current_position_ = config.min_position;
-    } else if (current_position_ > config.max_position) {
-      // if the current position is greater than the max position, set the
-      // current position to the max position
-      current_position_ = config.max_position;
-    }
-
     // update the detent config
     detent_config_ = config;
+
+    // set position after setting the config
+    set_position(current_position_);
 
     // Update derivative factor of torque controller based on detent width. If
     // the D factor is large on coarse detents, the motor ends up making noise
